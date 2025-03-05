@@ -37,11 +37,8 @@ class ProjectController extends Controller
         $imagePath = null;
         if ($request->hasFile('image')) {
             $namaFile = time() . '_' . $request->file('image')->getClientOriginalName();
-            $destinationPath = public_path('uploads'); // Ensure public directory
-            $request->file('image')->move($destinationPath, $namaFile);
-
-            // Save only the relative path or filename to DB
-            $imagePath = 'uploads/' . $namaFile;
+            $path = $request->file('image')->storeAs('uploads', $namaFile, 'public'); // Stores in storage/app/public/uploads
+            $imagePath = 'storage/' . $path;
         }
 
         Project::create([
