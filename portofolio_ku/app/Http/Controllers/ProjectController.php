@@ -36,7 +36,7 @@ class ProjectController extends Controller
     // Simpan gambar jika ada
     $imagePath = null;
     if ($request->hasFile('image')) {
-        $imagePath = $request->file('image')->store('images', 'public'); 
+        $imagePath = $request->file('gambar')->move(public_path('uploads'), $namaFile); 
     }
 
     Project::create([
