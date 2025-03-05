@@ -31,3 +31,13 @@ Route::get('/buat-symlink', function () {
     Artisan::call('storage:link');
     return 'Symlink berhasil dibuat!';
 });
+
+Route::get('/uploads/{filename}', function ($filename) {
+    $path = env('RAILWAY_ENVIRONMENT', false) ? "/tmp/uploads/$filename" : public_path("uploads/$filename");
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($path);
+});

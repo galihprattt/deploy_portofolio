@@ -37,9 +37,26 @@ class ProjectController extends Controller
         $imagePath = null;
         if ($request->hasFile('image')) {
             $namaFile = time() . '_' . $request->file('image')->getClientOriginalName();
-            $path = $request->file('image')->storeAs('uploads', $namaFile, 'public'); // Stores in storage/app/public/uploads
-            $imagePath = 'storage/' . $path;
+
+            // Check if running on Railway
+            if (env('RAILWAY_ENVIRONMENT', false)) {
+                $destinationPath = '/tmp/uploads'; // Writable path on Railway
+            } else {
+                $destinationPath = public_path('uploads'); // Local development path
+            }
+
+            // Ensure directory exists
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0777, true);
+            }
+
+            // Move the file
+            $request->file('image')->move($destinationPath, $namaFile);
+
+            // Save only the relative path for retrieval
+            $imagePath = env('RAILWAY_ENVIRONMENT', false) ? "/tmp/uploads/$namaFile" : "uploads/$namaFile";
         }
+
 
         Project::create([
             'title' => $request->title,

@@ -20,7 +20,7 @@
                 <div class="col-md-4 mb-4">
                     <div class="card shadow-sm">
                         @if($project->image)
-                            <img src="{{ asset($project->image) }}" class="card-img-top fixed-size-img" alt="Gambar Proyek">
+                            <img src="{{ url('/uploads/' . basename($project->image)) }}" alt="Uploaded Image">
 
                         @else
                             <div class="text-muted text-center p-3">Tidak ada gambar</div>
