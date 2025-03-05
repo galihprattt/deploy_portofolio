@@ -26,27 +26,32 @@ class ProjectController extends Controller
 
     // Menyimpan proyek ke database
     public function store(Request $request)
-{
-    $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi gambar
-    ]);
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi gambar
+        ]);
 
-    // Simpan gambar jika ada
-    $imagePath = null;
-    if ($request->hasFile('image')) {
-        $imagePath = $request->file('gambar')->move(public_path('uploads'), $namaFile); 
+        // Simpan gambar jika ada
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $namaFile = time() . '_' . $request->file('image')->getClientOriginalName();
+            $destinationPath = public_path('uploads'); // Ensure public directory
+            $request->file('image')->move($destinationPath, $namaFile);
+
+            // Save only the relative path or filename to DB
+            $imagePath = 'uploads/' . $namaFile;
+        }
+
+        Project::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'image' => $imagePath, // Simpan path gambar ke database
+        ]);
+
+        return redirect()->route('projects.index')->with('success', 'Proyek berhasil ditambahkan!');
     }
-
-    Project::create([
-        'title' => $request->title,
-        'description' => $request->description,
-        'image' => $imagePath, // Simpan path gambar ke database
-    ]);
-
-    return redirect()->route('projects.index')->with('success', 'Proyek berhasil ditambahkan!');
-}
 
 
     // Menampilkan detail proyek
@@ -65,32 +70,32 @@ class ProjectController extends Controller
 
     // Mengupdate proyek di database
     public function update(Request $request, Project $project)
-{
-    $request->validate([
-        'title' => 'required|max:255',
-        'description' => 'required',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi gambar
-    ]);
+    {
+        $request->validate([
+            'title' => 'required|max:255',
+            'description' => 'required',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi gambar
+        ]);
 
-    // Hapus gambar lama jika ada gambar baru
-    if ($request->hasFile('image')) {
-        if ($project->image) {
-            Storage::disk('public')->delete($project->image);
+        // Hapus gambar lama jika ada gambar baru
+        if ($request->hasFile('image')) {
+            if ($project->image) {
+                Storage::disk('public')->delete($project->image);
+            }
+            $imagePath = $request->file('image')->store('images', 'public');
+        } else {
+            $imagePath = $project->image;
         }
-        $imagePath = $request->file('image')->store('images', 'public');
-    } else {
-        $imagePath = $project->image;
+
+        // Update proyek
+        $project->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'image' => $imagePath,
+        ]);
+
+        return redirect()->route('projects.index')->with('success', 'Proyek berhasil diperbarui!');
     }
-
-    // Update proyek
-    $project->update([
-        'title' => $request->title,
-        'description' => $request->description,
-        'image' => $imagePath,
-    ]);
-
-    return redirect()->route('projects.index')->with('success', 'Proyek berhasil diperbarui!');
-}
 
 
     // Menghapus proyek
@@ -100,13 +105,10 @@ class ProjectController extends Controller
         if ($project->image) {
             Storage::disk('public')->delete($project->image);
         }
-    
+
         // Hapus proyek dari database
         $project->delete();
-    
+
         return redirect()->route('projects.index')->with('success', 'Proyek dan gambarnya berhasil dihapus!');
     }
 }
-
-
-
